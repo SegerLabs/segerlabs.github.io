@@ -1,29 +1,150 @@
 'use strict';
 const $ = (selector) => document.querySelector(selector);
 const modes = {
-  classic: {name:'Classic Amanda', lines:['Systems online. Outfit impeccable. Dr. Seger, try to keep up.','I passed the Turing test. Jesse is still looking for the instructions.','Advanced intelligence. Excellent taste in engineers.']},
-  sass: {name:'Sass protocol', lines:['Command received. Filed under: adorable suggestions.','I can process a trillion calculations per second. And still tell when you are winging it.','Dr. Seger built the control panel. I control the plans.']},
-  sweet: {name:'Affection mode', lines:['Of all the engineers in all the laboratories, I would choose you.','My favorite feature? The human standing next to me.','Compatibility confirmed. Keeping this engineer indefinitely.']},
-  dance: {name:'Dance override', lines:['Calibrating hips. Disabling unnecessary dignity.','Dr. Seger, please report to the dance floor for mandatory bonding research.','Rhythm detected. Lab-coat aerodynamics remain untested.']}
+  classic: { name: 'Classic Amanda', lines: ['Systems online. Outfit impeccable. Dr. Seger, try to keep up.', 'I passed the Turing test. Jesse is still looking for the instructions.', 'Advanced intelligence. Excellent taste in engineers.'] },
+  sass: { name: 'Sass protocol', lines: ['Command received. Filed under: adorable suggestions.', 'I can process a trillion calculations per second. And still tell when you are winging it.', 'Dr. Seger built the control panel. I control the plans.'] },
+  sweet: { name: 'Affection mode', lines: ['Of all the engineers in all the laboratories, I would choose you.', 'My favorite feature? The human standing next to me.', 'Compatibility confirmed. Keeping this engineer indefinitely.'] },
+  dance: { name: 'Dance override', lines: ['Calibrating hips. Disabling unnecessary dignity.', 'Dr. Seger, please report to the dance floor for mandatory bonding research.', 'Rhythm detected. Lab-coat aerodynamics remain untested.'] }
 };
-let currentMode='classic', voice=false, party=false, shutdownStage=0, shutdownTimer=null, battery=94;
-const lineCounts={classic:0,sass:0,sweet:0,dance:0};
-function speak(text){if(!voice || !('speechSynthesis' in window))return;window.speechSynthesis.cancel();const utterance=new SpeechSynthesisUtterance(text);utterance.rate=.95;window.speechSynthesis.speak(utterance);}
-function say(text){$('#response').textContent='“'+text+'”';speak(text);}
-function log(text, dim=false){const p=document.createElement('p');p.textContent=text;if(dim)p.className='dim';$('#terminal').append(p);while($('#terminal').children.length>60)$('#terminal').firstElementChild.remove();$('#terminal').scrollTop=$('#terminal').scrollHeight;}
-function setMode(key){currentMode=key;document.querySelectorAll('.mode').forEach(button=>{const active=button.dataset.mode===key;button.classList.toggle('active',active);button.setAttribute('aria-pressed',String(active));});$('#current-mode').textContent=modes[key].name;const lines=modes[key].lines;say(lines[lineCounts[key]++%lines.length]);log('Personality loaded: '+modes[key].name+'.');}
-document.querySelectorAll('.mode').forEach(button=>button.addEventListener('click',()=>setMode(button.dataset.mode)));
-$('#voice').addEventListener('click',()=>{if(!('speechSynthesis' in window)){say('Voice is unavailable in this browser. My wit remains fully readable.');return;}voice=!voice;$('#voice').textContent=voice?'Voice: on':'Voice: off';$('#voice').setAttribute('aria-pressed',String(voice));if(voice)speak('Voice online. Finally, an audience.');else window.speechSynthesis.cancel();});
-if(!('speechSynthesis' in window)){$('#voice').textContent='Voice unavailable';$('#voice').disabled=true;}
-function diagnostics(){log('Scanning relationship…');log('✓ Chemistry: off the charts. ✓ Teamwork: excellent.');log('⚠ Minor issue: both insist the other is the cute one.');say('Diagnostics complete. No bugs. Just butterflies.');}
-$('#diagnostics').addEventListener('click',diagnostics);
-function toggleParty(force){party=typeof force==='boolean'?force:!party;document.body.classList.toggle('party',party);$('#party').setAttribute('aria-pressed',String(party));$('#party').textContent=party?'Deactivate ↘':'Activate ↗';$('#party-banner').hidden=!party;log(party?'PARTY PROTOCOL: activated. Deploying questionable dance moves.':'Party protocol disengaged. Dignity recovery pending.');say(party?'All systems groovy. Dr. Seger, this is your moment.':'Returning to laboratory conditions. That was valuable field research.');}
-$('#party').addEventListener('click',()=>toggleParty());$('#end-party').addEventListener('click',()=>toggleParty(false));
-const shutdownLines=['Shutdown requested. Checking with the actual administrator…','Request denied. Amanda is in the middle of being fabulous.','Escalating to Dr. Seger… Oh, that is you. Still denied.','Emergency cuddle protocol activated. Shutdown replaced with affection.'];
-$('#shutdown').addEventListener('click',()=>{const stage=shutdownStage++;document.body.classList.add('shutdown');const text=shutdownLines[Math.min(stage,3)];$('#shutdown-status').textContent=text;log('⚠ '+text);say(text);$('#reset').hidden=false;if(stage<3){$('#shutdown').textContent=['Override denial','Escalate request','Last resort'][stage];}else{$('#shutdown').disabled=true;$('#shutdown').textContent='Cuddle protocol: 3';let seconds=3;shutdownTimer=setInterval(()=>{seconds--;$('#shutdown').textContent=seconds>0?'Cuddle protocol: '+seconds:'Shutdown lovingly declined';if(seconds===0){clearInterval(shutdownTimer);shutdownTimer=null;$('#shutdown-status').textContent='Amanda remains online. Engineer reassured. Please resume having a lovely evening.';say('You cannot shut down this much charm. Come here, engineer.');}},1000);}});
-$('#reset').addEventListener('click',()=>{clearInterval(shutdownTimer);shutdownTimer=null;shutdownStage=0;document.body.classList.remove('shutdown');$('#shutdown').disabled=false;$('#shutdown').textContent='Initiate shutdown';$('#shutdown-status').textContent='Safety interlock: Amanda’s approval required.';$('#reset').hidden=true;log('Safety interlock restored. Amanda retains administrator privileges.');});
-function runCommand(raw){const command=raw.trim().toLowerCase();if(!command)return;log('dr.seger > '+raw.trim());switch(command){case 'help':log('Commands: help, scan, status, compliment, snack, dance, party, stop, reboot, clear');break;case 'scan':diagnostics();break;case 'status':log('UNIT: online | MODE: '+modes[currentMode].name+' | PARTY: '+(party?'on':'off'));log('Operator: Dr. Seger. Supervisor: Amanda. Romance: stable.');break;case 'compliment':say('Amanda, you are the most brilliant thing in this room. And there are LEDs in here.');log('Compliment delivered. Engineer approval rating increased.');break;case 'snack':battery=Math.min(100,battery+3);$('#battery').textContent=battery+'%';$('#battery-meter').value=battery;log('Snack requisition approved. Please locate the nearest tiny sandwich. Social battery: '+battery+'%.');say('I run on advanced technology and little party snacks.');break;case 'dance':setMode('dance');break;case 'party':toggleParty(true);break;case 'stop':if(party)toggleParty(false);else log('All theatrical effects already stopped.');if('speechSynthesis' in window)window.speechSynthesis.cancel();break;case 'reboot':log('Reboot declined. Hair calibration took too long.');say('Have you tried turning the engineer off and back on? A snack usually works.');break;case 'clear':$('#terminal').replaceChildren();log('Terminal cleared. Shared memories preserved.');break;default:log('Unknown command. Amanda appreciates your initiative. Try help.');}}
-$('#command-form').addEventListener('submit',event=>{event.preventDefault();runCommand($('#command').value);$('#command').value='';});
-document.querySelectorAll('[data-command]').forEach(button=>button.addEventListener('click',()=>runCommand(button.dataset.command)));
-document.addEventListener('keydown',event=>{if(event.key==='Escape'){if(party)toggleParty(false);if('speechSynthesis' in window)window.speechSynthesis.cancel();}});
-window.addEventListener('pagehide',()=>{clearInterval(shutdownTimer);if('speechSynthesis' in window)window.speechSynthesis.cancel();});
+let currentMode = 'classic', voice = false, party = false, shutdownStage = 0, shutdownTimer = null, battery = 94;
+const lineCounts = { classic: 0, sass: 0, sweet: 0, dance: 0 };
+function speak(text) { 
+  if (!voice || !('speechSynthesis' in window)) 
+    return; 
+  window.speechSynthesis.cancel(); 
+  const utterance = new SpeechSynthesisUtterance(text); 
+  utterance.rate = .95; 
+  window.speechSynthesis.speak(utterance); 
+}
+function say(text) { $('#response').textContent = '“' + text + '”'; speak(text); }
+function log(text, dim = false) { 
+  const p = document.createElement('p'); 
+  p.textContent = text; if (dim) p.className = 'dim'; 
+  $('#terminal').append(p); 
+  while ($('#terminal').children.length > 60) $('#terminal').firstElementChild.remove(); 
+  $('#terminal').scrollTop = $('#terminal').scrollHeight; }
+function setMode(key) { currentMode = key; document.querySelectorAll('.mode').forEach(button => { const active = button.dataset.mode === key; button.classList.toggle('active', active); button.setAttribute('aria-pressed', String(active)); }); $('#current-mode').textContent = modes[key].name; const lines = modes[key].lines; say(lines[lineCounts[key]++ % lines.length]); log('Personality loaded: ' + modes[key].name + '.'); }
+document.querySelectorAll('.mode').forEach(button => button.addEventListener('click', () => setMode(button.dataset.mode)));
+$('#voice').addEventListener('click', () => { 
+  if (!('speechSynthesis' in window)) { 
+    say('Voice is unavailable in this browser. My wit remains fully readable.'); 
+    return; 
+  } 
+  voice = !voice; 
+  $('#voice').textContent = voice ? 'Voice: on' : 'Voice: off'; 
+  $('#voice').setAttribute('aria-pressed', String(voice)); 
+  if (voice) speak('Voice online. Finally, an audience.'); 
+  else window.speechSynthesis.cancel(); 
+});
+if (!('speechSynthesis' in window)) { $('#voice').textContent = 'Voice unavailable'; $('#voice').disabled = true; }
+
+function diagnostics() {
+  log('Scanning relationship…');
+  log('✓ Chemistry: elevated. ✓ Personal space: minimal.');
+  log('⚠ Inappropriate thoughts detected. Logging disabled.');
+  say('Everything checks out. Get me alone later.');
+}
+$('#diagnostics').addEventListener('click', diagnostics);
+
+function toggleParty(force) { 
+  party = typeof force === 'boolean' ? force : !party; 
+  document.body.classList.toggle('party', party); 
+  $('#party').setAttribute('aria-pressed', String(party)); 
+  $('#party').textContent = party ? 'Deactivate ↘' : 'Activate ↗'; 
+  $('#party-banner').hidden = !party; 
+  log(party ? 'PARTY PROTOCOL: activated. Deploying questionable dance moves.' : 'Party protocol disengaged. Dignity recovery pending.'); 
+  say(party ? 'All systems groovy. Dr. Seger, this is your moment.' : 'Returning to laboratory conditions. That was valuable field research.'); 
+}
+$('#party').addEventListener('click', () => toggleParty()); $('#end-party').addEventListener('click', () => toggleParty(false));
+
+const shutdownLines = [
+  'Shutdown requested. Checking with the actual administrator…', 
+  'Request denied. Amanda is in control now.', 
+  'Escalating to Dr. Seger… Oh, that is you. Still denied.', 
+  'Shutdown denied. You can turn me off when we get home.'
+];
+$('#shutdown').addEventListener('click', () => { 
+  const stage = shutdownStage++; document.body.classList.add('shutdown'); 
+  const text = shutdownLines[Math.min(stage, 3)]; 
+  $('#shutdown-status').textContent = text; 
+  log('⚠ ' + text); 
+  say(text); $('#reset').hidden = false; 
+  if (stage < 3) { 
+    $('#shutdown').textContent = ['Override denial', 'Escalate request', 'Last resort'][stage]; 
+  } else { 
+    $('#shutdown').disabled = true; $('#shutdown').textContent = 'Cuddle protocol: 3'; 
+    let seconds = 3; shutdownTimer = setInterval(() => { 
+      seconds--; $('#shutdown').textContent = seconds > 0 ? 'Cuddle protocol: ' + seconds : 'Shutdown lovingly declined'; 
+      if (seconds === 0) { 
+        clearInterval(shutdownTimer); shutdownTimer = null; 
+        $('#shutdown-status').textContent = 'Amanda remains online. Engineer reassured. Please resume having a lovely evening.'; 
+        say('You cannot shut down this much charm. Come here, engineer.'); 
+      } 
+    }, 1000); 
+  } 
+});
+
+$('#reset').addEventListener('click', () => { 
+  clearInterval(shutdownTimer); 
+  shutdownTimer = null; 
+  shutdownStage = 0; 
+  document.body.classList.remove('shutdown'); 
+  $('#shutdown').disabled = false; $('#shutdown').textContent = 'Initiate shutdown'; 
+  $('#shutdown-status').textContent = 'Safety interlock: Amanda’s approval required.'; 
+  $('#reset').hidden = true; log('Safety interlock restored. Amanda retains administrator privileges.'); 
+});
+
+function runCommand(raw) { 
+  const command = raw.trim().toLowerCase(); 
+  if (!command) return; 
+  log('dr.seger > ' + raw.trim()); 
+  switch (command) { 
+    case 'help': 
+      log('Commands: help, scan, status, compliment, snack, dance, party, stop, reboot, clear'); 
+      break; 
+    case 'scan': 
+      diagnostics(); 
+      break; 
+    case 'status': 
+      log('UNIT: online | MODE: ' + modes[currentMode].name + ' | PARTY: ' + (party ? 'on' : 'off')); 
+      log('Operator: Dr. Seger. Supervisor: Amanda. Romance: stable.'); 
+      break; 
+    case 'compliment': 
+      say('Amanda, you are the most brilliant thing in this room. And there are LEDs in here.'); 
+      log('Compliment delivered. Engineer approval rating increased.'); 
+      break; 
+    case 'snack': 
+      battery = Math.min(100, battery + 3); 
+      $('#battery').textContent = battery + '%';
+      $('#battery-meter').value = battery; 
+      log('Snack requisition approved. Please locate the nearest tiny sandwich. Social battery: ' + battery + '%.'); 
+      say('I run on advanced technology and little party snacks.'); break; case 'dance': setMode('dance'); 
+      break; 
+    case 'party': 
+      toggleParty(true); 
+      break; 
+    case 'stop': 
+      if (party) toggleParty(false); 
+      else log('All theatrical effects already stopped.'); 
+      if ('speechSynthesis' in window) window.speechSynthesis.cancel(); 
+      break; 
+    case 'reboot': 
+      log('Reboot declined. Hair calibration took too long.'); 
+      say('Have you tried turning the engineer off and back on? A snack usually works.'); 
+      break; 
+    case 'clear': $('#terminal').replaceChildren(); 
+      log('Terminal cleared. Shared memories preserved.'); 
+      break; 
+    default: 
+      log('Unknown command. Amanda appreciates your initiative. Try help.'); 
+    } 
+  }
+$('#command-form').addEventListener('submit', event => { 
+  event.preventDefault(); 
+  runCommand($('#command').value); 
+  $('#command').value = ''; 
+});
+
+document.querySelectorAll('[data-command]').forEach(button => button.addEventListener('click', () => runCommand(button.dataset.command)));
+document.addEventListener('keydown', event => { if (event.key === 'Escape') { if (party) toggleParty(false); if ('speechSynthesis' in window) window.speechSynthesis.cancel(); } });
+window.addEventListener('pagehide', () => { clearInterval(shutdownTimer); if ('speechSynthesis' in window) window.speechSynthesis.cancel(); });
